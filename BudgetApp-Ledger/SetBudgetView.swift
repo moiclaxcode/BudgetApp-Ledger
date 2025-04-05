@@ -10,6 +10,7 @@ import SwiftUI
 
 struct SetBudgetView: View {
     var budget: Budget
+    @ObservedObject var categoryStore: CategoryStore
     var onSave: (() -> Void)?
     
     // MARK: - State Variables
@@ -30,8 +31,9 @@ struct SetBudgetView: View {
     let budgetCycles = ["Monthly", "Every 2 months", "Every 3 months", "Every 4 months", "Every 6 months", "Yearly", "Weekly", "Every 2 weeks", "Every 4 weeks", "Daily", "Semimonthly"]
     
     // MARK: - Initializer
-    init(budget: Budget, onSave: (() -> Void)? = nil) {
+    init(budget: Budget, categoryStore: CategoryStore, onSave: (() -> Void)? = nil) {
         self.budget = budget
+        self.categoryStore = categoryStore
         self.onSave = onSave
         // If the budget's allocatedAmount is greater than 0, we consider it an edit.
         _budgetAmount = State(initialValue: budget.allocatedAmount > 0 ? String(format: "%.2f", budget.allocatedAmount) : "0.00")
@@ -47,7 +49,7 @@ struct SetBudgetView: View {
                 Color(#colorLiteral(red: 0.968627451, green: 0.968627451, blue: 0.968627451, alpha: 1))
                     .edgesIgnoringSafeArea(.all)
                 
-                VStack(spacing: 20) {
+                VStack(spacing: 10) {
                     Divider() // Top divider for structure
                     
                     // Display Subcategory (read-only)
@@ -156,6 +158,26 @@ struct SetBudgetView: View {
         }
     }
     
+    // MARK: - Helper: Adjust Start Date for New Cycle
+    private func adjustedStartDate(for cycle: String, currentStartDate: Date) -> Date {
+        let calendar = Calendar.current
+        let now = Date()
+        switch cycle {
+        case "Monthly":
+            // For a monthly cycle, return the first day of the current month
+            let components = calendar.dateComponents([.year, .month], from: now)
+            return calendar.date(from: components) ?? currentStartDate
+        case "Weekly":
+            // For a weekly cycle, return the most recent Sunday (adjust as needed)
+            let weekday = calendar.component(.weekday, from: now)
+            let daysToSubtract = weekday - calendar.firstWeekday
+            return calendar.date(byAdding: .day, value: -daysToSubtract, to: now) ?? currentStartDate
+        default:
+            // For other cycles, no automatic adjustment is performed
+            return currentStartDate
+        }
+    }
+    
     // MARK: - Save Budget Function
     private func saveBudget() {
         guard let amount = Double(budgetAmount), amount >= 0 else {
@@ -165,10 +187,11 @@ struct SetBudgetView: View {
         var updatedBudget = budget
         updatedBudget.allocatedAmount = amount
         updatedBudget.budgetCycle = selectedCycle
-        updatedBudget.startDate = startDate
+        // Automatically adjust the start date based on the selected cycle
+        updatedBudget.startDate = adjustedStartDate(for: selectedCycle, currentStartDate: startDate)
         
         // Save or update the budget in storage.
-        CategoryStorage.saveBudget(updatedBudget)
+        categoryStore.saveBudget(updatedBudget)
         
         showConfirmation = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -176,6 +199,7 @@ struct SetBudgetView: View {
         }
     }
 }
+
 struct SetBudgetView_Previews: PreviewProvider {
     static var previews: some View {
         SetBudgetView(budget: Budget(
@@ -187,6 +211,6 @@ struct SetBudgetView_Previews: PreviewProvider {
             budget: 0.0,
             budgetCycle: "Monthly",
             startDate: Date()
-        ))
+        ), categoryStore: CategoryStore(ledgerGroup: "Preview Ledger"))
     }
 }

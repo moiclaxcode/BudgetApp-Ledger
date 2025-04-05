@@ -68,6 +68,29 @@ struct CategoryStorage {
         return categories[ledgerGroup] ?? []
     }
 
+    // Renames a category within a specific Ledger Group
+    static func renameCategory(from oldName: String, to newName: String, for ledgerGroup: String) {
+        var categories = getCategories()
+
+        guard var groupCategories = categories[ledgerGroup],
+              let index = groupCategories.firstIndex(of: oldName) else { return }
+
+        groupCategories[index] = newName
+        categories[ledgerGroup] = groupCategories
+        saveCategories(categories)
+    }
+
+    // Reorders categories within a specific Ledger Group
+    static func moveCategory(fromOffsets source: IndexSet, toOffset destination: Int, for ledgerGroup: String) {
+        var categories = getCategories()
+
+        guard var groupCategories = categories[ledgerGroup] else { return }
+
+        groupCategories.move(fromOffsets: source, toOffset: destination)
+        categories[ledgerGroup] = groupCategories
+        saveCategories(categories)
+    }
+
     // MARK: - Subcategories Management
     // Retrieves subcategories, grouped by Ledger Group and Category
     static func getSubcategoriesByCategory() -> [String: [String]] {

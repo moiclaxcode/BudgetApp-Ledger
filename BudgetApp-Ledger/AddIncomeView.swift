@@ -311,7 +311,7 @@ struct AddIncomeView: View {
             date: date,
             amount: abs(transactionAmount),
             accountID: selectedAccountID,
-            type: "Income",
+            type: .income,
             ledgerGroup: transactionLedgerGroup,
             notes: notes
         )

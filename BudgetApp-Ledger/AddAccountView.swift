@@ -32,6 +32,12 @@ struct AddAccountView: View {
     @State private var existingLedgers: [String] = UserDefaults.standard.getLedgers()
     @State private var notes: String = ""
     
+    // New Credit-specific fields
+    @State private var creditLimit: Double? = nil
+    @State private var statementBalance: Double? = nil
+    @State private var billingDate: Date = Date()
+    @State private var dueDate: Date = Date()
+    
     @State private var showConfirmation = false
     @State private var showMissingFieldsAlert = false
     
@@ -56,6 +62,14 @@ struct AddAccountView: View {
             _openingBalance = State(initialValue: account.openingBalance)
             _asOfDate = State(initialValue: account.asOfDate)
             _ledgerGroup = State(initialValue: account.ledgerGroup)
+            
+            // Pre-fill credit-specific fields if the account is Credit
+            if account.type == "Credit" {
+                _creditLimit = State(initialValue: account.creditLimit)
+                _statementBalance = State(initialValue: account.statementBalance)
+                _billingDate = State(initialValue: account.billingDate ?? Date())
+                _dueDate = State(initialValue: account.dueDate ?? Date())
+            }
         }
     }
     
@@ -103,7 +117,7 @@ struct AddAccountView: View {
                         }
                     }
                     
-                    // Row 2: As of Date & Opening Balance
+                    // Row 2: As of Date & Opening Balance (or omitted for Credit accounts)
                     HStack(spacing: 10) {
                         VStack(alignment: .center) {
                             Text("As of Date")
@@ -114,20 +128,91 @@ struct AddAccountView: View {
                                 .frame(width: 130)
                         }
                         
-                        VStack(alignment: .center) {
-                            Text("Opening Balance")
-                                .foregroundColor(fieldLabelColor)
-                                .font(fieldFont)
-                            TextField("0.00", value: $openingBalance, format: .currency(code: "USD"))
-                                .keyboardType(.decimalPad)
-                                .foregroundColor(.gray)
-                                .font(fieldFont)
-                                .multilineTextAlignment(.center)
-                                .padding(.vertical, 7)
-                                .padding(.horizontal, 8)
-                                .frame(width: 130)
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(5)
+                        if accountType != "Credit" {
+                            VStack(alignment: .center) {
+                                Text("Opening Balance")
+                                    .foregroundColor(fieldLabelColor)
+                                    .font(fieldFont)
+                                TextField("0.00", value: $openingBalance, format: .currency(code: "USD"))
+                                    .keyboardType(.decimalPad)
+                                    .foregroundColor(.gray)
+                                    .font(fieldFont)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.vertical, 7)
+                                    .padding(.horizontal, 8)
+                                    .frame(width: 130)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(5)
+                            }
+                        }
+                    }
+                    
+                    // Credit-specific fields
+                    if accountType == "Credit" {
+                        VStack(spacing: 10) {
+                            HStack(spacing: 10) {
+                                VStack(alignment: .center) {
+                                    Text("Credit Limit")
+                                        .foregroundColor(fieldLabelColor)
+                                        .font(fieldFont)
+                                    TextField("0.00", value: $creditLimit, format: .currency(code: "USD"))
+                                        .keyboardType(.decimalPad)
+                                        .foregroundColor(.gray)
+                                        .font(fieldFont)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.vertical, 7)
+                                        .padding(.horizontal, 8)
+                                        .frame(width: 130)
+                                        .background(Color.gray.opacity(0.1))
+                                        .cornerRadius(5)
+                                }
+                                VStack(alignment: .center) {
+                                    Text("Statement Balance")
+                                        .foregroundColor(fieldLabelColor)
+                                        .font(fieldFont)
+                                    TextField("0.00", value: $statementBalance, format: .currency(code: "USD"))
+                                        .keyboardType(.decimalPad)
+                                        .foregroundColor(.gray)
+                                        .font(fieldFont)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.vertical, 7)
+                                        .padding(.horizontal, 8)
+                                        .frame(width: 130)
+                                        .background(Color.gray.opacity(0.1))
+                                        .cornerRadius(5)
+                                }
+                            }
+                            VStack(alignment: .center) {
+                                Text("Account Balance")
+                                    .foregroundColor(fieldLabelColor)
+                                    .font(fieldFont)
+                                Text((creditLimit ?? 0) - (statementBalance ?? 0), format: .currency(code: "USD"))
+                                    .font(fieldFont)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.vertical, 7)
+                                    .padding(.horizontal, 8)
+                                    .frame(width: 130)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(5)
+                            }
+                            HStack(spacing: 10) {
+                                VStack(alignment: .center) {
+                                    Text("Billing Date")
+                                        .foregroundColor(fieldLabelColor)
+                                        .font(fieldFont)
+                                    DatePicker("", selection: $billingDate, displayedComponents: .date)
+                                        .labelsHidden()
+                                        .frame(width: 130)
+                                }
+                                VStack(alignment: .center) {
+                                    Text("Due Date")
+                                        .foregroundColor(fieldLabelColor)
+                                        .font(fieldFont)
+                                    DatePicker("", selection: $dueDate, displayedComponents: .date)
+                                        .labelsHidden()
+                                        .frame(width: 130)
+                                }
+                            }
                         }
                     }
                     
@@ -238,25 +323,44 @@ struct AddAccountView: View {
     
     // MARK: - Save Account
     private func saveAccount() {
-        guard !accountName.isEmpty,
-              !ledgerGroup.isEmpty,
-              let balance = openingBalance
-        else {
-            showMissingFieldsAlert = true
-            return
+        // For Credit accounts, we expect creditLimit and statementBalance to be provided.
+        if accountType == "Credit" {
+            guard !accountName.isEmpty,
+                  !ledgerGroup.isEmpty
+            else {
+                showMissingFieldsAlert = true
+                return
+            }
+        } else {
+            guard !accountName.isEmpty,
+                  !ledgerGroup.isEmpty,
+                  let _ = openingBalance
+            else {
+                showMissingFieldsAlert = true
+                return
+            }
         }
         
         let accountID = accountToEdit?.id ?? UUID()
         
-        // If accountToEdit is nil, we create a new account; else we update
+        let computedBalance: Double = accountType == "Credit"
+            ? (statementBalance ?? 0.0)
+            : (openingBalance ?? 0.0)
+        
         let newAccount = Account(
             id: accountID,
             name: accountName,
             type: accountType,
             description: descriptionText,
-            openingBalance: balance,
+            openingBalance: computedBalance,
             asOfDate: asOfDate,
-            ledgerGroup: ledgerGroup
+            ledgerGroup: ledgerGroup,
+            // Pass credit-specific fields if the account is Credit
+            creditLimit: accountType == "Credit" ? (creditLimit ?? 0.0) : nil,
+            statementBalance: accountType == "Credit" ? (statementBalance ?? 0.0) : nil,
+            billingDate: accountType == "Credit" ? billingDate : nil,
+            dueDate: accountType == "Credit" ? dueDate : nil,
+            notes: notes
         )
         
         // Fire the onSave closure to update or add in parent

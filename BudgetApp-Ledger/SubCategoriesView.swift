@@ -18,6 +18,7 @@ fileprivate struct IdentifiableSubCategory: Identifiable {
 struct SubcategoriesView: View {
     var selectedCategory: String // The category that subcategories belong to
     let ledgerGroup: String      // Ledger group passed in from Dashboard
+    @ObservedObject var categoryStore: CategoryStore
     
     @State private var subCategories: [String] = [] // Holds the list of subcategories
     
@@ -35,10 +36,11 @@ struct SubcategoriesView: View {
     @State private var isEditMode: Bool = false
     
     // MARK: - Initializer
-    init(selectedCategory: String, ledgerGroup: String) { // Added ledgerGroup parameter
+    init(selectedCategory: String, ledgerGroup: String, categoryStore: CategoryStore) {
         self.selectedCategory = selectedCategory
-        self.ledgerGroup = ledgerGroup // Initialize ledgerGroup
-        _subCategories = State(initialValue: CategoryStorage.getSubcategories(forCategory: selectedCategory))
+        self.ledgerGroup = ledgerGroup
+        self.categoryStore = categoryStore
+        _subCategories = State(initialValue: categoryStore.getSubcategories(for: selectedCategory))
     }
     
     // MARK: - Computed Property for Total Allocated Amount
@@ -51,10 +53,29 @@ struct SubcategoriesView: View {
         NavigationView {
             ZStack {
                 // Background for the entire view
-                Color(#colorLiteral(red: 0.9686, green: 0.9686, blue: 0.9686, alpha: 1))
+                Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack {
+                    ZStack {
+                        Text("Subcategories")
+                            .font(.headline)
+                            .foregroundColor(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
+                        
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                showTextField.toggle()
+                            }) {
+                                Image(systemName: "plus.circle")
+                                    .imageScale(.large)
+                                    .foregroundColor(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+                    
                     // Subcategory Input Section
                     if showTextField {
                         VStack(spacing: 10) {
@@ -144,30 +165,12 @@ struct SubcategoriesView: View {
                             }
                         }
                         .listStyle(InsetGroupedListStyle())
+                        .shadow(color: Color.gray.opacity(0.3), radius: 2, y: 1)
                         .scrollContentBackground(.hidden)  // Hide default background (iOS 16+)
-                        .background(Color("YourCustomBackgroundColor"))
+                        .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)))
                     }
                     
                     Spacer()
-                }
-                .navigationBarTitle("Subcategories", displayMode: .inline)
-                .toolbar {
-                    ToolbarItem(placement: .principal) {
-                        VStack {
-                            Text("Subcategories")
-                                .font(.headline)
-                                .foregroundColor(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
-                        }
-                    }
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            showTextField.toggle()
-                        }) {
-                            Image(systemName: "plus.circle")
-                                .imageScale(.medium)
-                                .foregroundColor(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
-                        }
-                    }
                 }
                 .padding()
             }
@@ -181,25 +184,25 @@ struct SubcategoriesView: View {
         // Top-level sheet presenting SetBudgetView.
         // If isEditMode is true, the view loads the existing budget for edit; if false, it creates a new budget.
         .sheet(item: $selectedSubCategory) { subCategory in
-            if isEditMode {
-                SetBudgetView(budget: getBudgetForCategory(subCategory.name)) {
-                    refreshSubCategories()
-                }
-            } else {
-                let newBudget = Budget(
-                    parentCategory: selectedCategory,
-                    subCategory: subCategory.name,
-                    description: "",
-                    type: "Expense",
-                    budget: 0,
-                    ledgerGroup: ledgerGroup,
-                    budgetCycle: "Monthly",
-                    startDate: Date()
-                )
-                SetBudgetView(budget: newBudget) {
-                    refreshSubCategories()
-                }
+        if isEditMode {
+            SetBudgetView(budget: getBudgetForCategory(subCategory.name), categoryStore: categoryStore) {
+                refreshSubCategories()
             }
+        } else if !isEditMode {
+            let newBudget = Budget(
+                parentCategory: selectedCategory,
+                subCategory: subCategory.name,
+                description: "",
+                type: "Expense",
+                budget: 0,
+                ledgerGroup: ledgerGroup,
+                budgetCycle: "Monthly",
+                startDate: Date()
+            )
+            SetBudgetView(budget: newBudget, categoryStore: categoryStore) {
+                refreshSubCategories()
+            }
+        }
         }
     }
     
@@ -264,7 +267,7 @@ struct SubcategoriesView: View {
         } else if progress < 1.0 {
             progressColor = Color(#colorLiteral(red: 0.9529411793, green: 0.6862745285, blue: 0.1333333403, alpha: 1)) // orange
         } else {
-            progressColor = Color(#colorLiteral(red: 0.768627451, green: 0.07058823529, blue: 0.1921568627, alpha: 1)) // red
+            progressColor = Color(#colorLiteral(red: 0.8901960784, green: 0.09411764706, blue: 0.2156862745, alpha: 1)) // red
         }
         
         return HStack {
@@ -300,8 +303,8 @@ struct SubcategoriesView: View {
             // Ellipsis menu for editing/deleting:
             Menu {
                 Button("Edit") {
-                    selectedSubCategory = IdentifiableSubCategory(name: subCategory)
                     isEditMode = true
+                    selectedSubCategory = IdentifiableSubCategory(name: subCategory)
                 }
                 Button("Delete", role: .destructive) {
                     deleteSubCategory(subCategory)
@@ -311,15 +314,15 @@ struct SubcategoriesView: View {
                     .foregroundColor(Color(#colorLiteral(red: 0.549, green: 0.596, blue: 0.655, alpha: 1)))
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 4)
     }
     
     // MARK: - Add a New Subcategory
     private func addSubCategory(_ subCategory: String) {
         if !subCategories.contains(subCategory) {
             subCategories.append(subCategory)
-            CategoryStorage.saveSubcategories(forCategory: selectedCategory, subcategories: subCategories)
-            CategoryStorage.saveBudget(Budget(
+            categoryStore.saveSubcategories(for: selectedCategory, subcategories: subCategories)
+            categoryStore.saveBudget(Budget(
                 parentCategory: selectedCategory,
                 subCategory: subCategory,
                 description: "",
@@ -336,20 +339,19 @@ struct SubcategoriesView: View {
     // MARK: - Refresh Subcategories List
     private func refreshSubCategories() {
         DispatchQueue.main.async {
-            let savedSubcategories = UserDefaults.standard.dictionary(forKey: "subcategories") as? [String: [String]] ?? [:]
-            self.subCategories = savedSubcategories[selectedCategory] ?? []
+            self.subCategories = categoryStore.getSubcategories(for: selectedCategory)
         }
     }
     
     // MARK: - Delete a Subcategory
     private func deleteSubCategory(_ subCategory: String) {
         subCategories.removeAll { $0 == subCategory }
-        CategoryStorage.saveSubcategories(forCategory: selectedCategory, subcategories: subCategories)
+        categoryStore.saveSubcategories(for: selectedCategory, subcategories: subCategories)
     }
 }
 
 struct SubcategoriesView_Previews: PreviewProvider {
     static var previews: some View {
-        SubcategoriesView(selectedCategory: "Sample Category", ledgerGroup: "Sample Ledger")
+        SubcategoriesView(selectedCategory: "Sample Category", ledgerGroup: "Sample Ledger", categoryStore: CategoryStore(ledgerGroup: "Sample Ledger"))
     }
 }

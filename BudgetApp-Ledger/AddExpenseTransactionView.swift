@@ -10,6 +10,7 @@ import SwiftUI
 
 struct AddExpenseTransactionView: View {
     var ledgerGroup: String
+    @ObservedObject var categoryStore: CategoryStore
     var isBill: Bool = false // <-- new property
     // Customization properties for fonts and colors
     var labelFont: Font = .subheadline
@@ -34,10 +35,13 @@ struct AddExpenseTransactionView: View {
     
     var existingTransaction: Transaction? // Holds the existing transaction if editing
     var onSave: (Transaction) -> Void
+    private let originalTransaction: Transaction?
     
     init(ledgerGroup: String, existingTransaction: Transaction? = nil, onSave: @escaping (Transaction) -> Void) {
+        self.categoryStore = CategoryStore(ledgerGroup: ledgerGroup)
         self.ledgerGroup = ledgerGroup
         self.existingTransaction = existingTransaction
+        self.originalTransaction = existingTransaction
         self.onSave = onSave
         
         // Pre-fill data when editing
@@ -50,6 +54,19 @@ struct AddExpenseTransactionView: View {
         _payee = State(initialValue: existingTransaction?.payee ?? "")
         // Set the ledger group for this transaction from the passed ledgerGroup
         _transactionLedgerGroup = State(initialValue: ledgerGroup)
+    }
+
+    private func hasChanges() -> Bool {
+        guard let original = originalTransaction else { return true }
+
+        return selectedCategory != original.parentCategory ||
+               selectedSubCategory != original.subCategory ||
+               notes != original.description ||
+               abs(Double(amount) ?? 0.0) != abs(original.amount) ||
+               selectedAccountID != original.accountID ||
+               date != original.date ||
+               transactionLedgerGroup != original.ledgerGroup ||
+               payee != original.payee
     }
     
     var body: some View {
@@ -291,36 +308,46 @@ struct AddExpenseTransactionView: View {
                         }
                         
                         if let transactionToEdit = existingTransaction {
-                            // Update existing transaction
-                            var updatedTransaction = transactionToEdit
-                            updatedTransaction.parentCategory = selectedCategory
-                            updatedTransaction.subCategory = selectedSubCategory
-                            updatedTransaction.description = notes
-                            updatedTransaction.date = date
-                            updatedTransaction.amount = -abs(transactionAmount)
-                            updatedTransaction.accountID = selectedAccountID ?? UUID()
-                            updatedTransaction.ledgerGroup = transactionLedgerGroup
-                            updatedTransaction.payee = payee
-                            
-                            onSave(updatedTransaction)
+                            if hasChanges() {
+                                var updatedTransaction = transactionToEdit
+                                updatedTransaction.parentCategory = selectedCategory
+                                updatedTransaction.subCategory = selectedSubCategory
+                                updatedTransaction.description = notes
+                                updatedTransaction.date = date
+                                updatedTransaction.amount = -abs(transactionAmount)
+                                updatedTransaction.accountID = selectedAccountID ?? UUID()
+                                updatedTransaction.ledgerGroup = transactionLedgerGroup
+                                updatedTransaction.payee = payee
+
+                                onSave(updatedTransaction)
+                            }
                         } else {
                             // Create a new transaction
+                            let id = UUID()
+                            let parentCategory = selectedCategory
+                            let subCategory = selectedSubCategory
+                            let description = notes
+                            let transactionDate = date
+                            let transactionAmountValue = -abs(transactionAmount)
+                            let accountID = selectedAccountID ?? UUID()
+                            let transactionType: TransactionType = .expense
+                            let ledgerGroup = transactionLedgerGroup
+                            let transactionPayee = payee
+
                             let newTransaction = Transaction(
-                                id: UUID(),
-                                parentCategory: selectedCategory,
-                                subCategory: selectedSubCategory,
-                                description: notes,
-                                date: date,
-                                amount: -abs(transactionAmount),
-                                accountID: selectedAccountID ?? UUID(),
-                                type: "Expense",
-                                ledgerGroup: transactionLedgerGroup,
-                                payee: payee
+                                id: id,
+                                parentCategory: parentCategory,
+                                subCategory: subCategory,
+                                description: description,
+                                date: transactionDate,
+                                amount: transactionAmountValue,
+                                accountID: accountID,
+                                type: transactionType,
+                                ledgerGroup: ledgerGroup,
+                                payee: transactionPayee
                             )
                             
-                            var transactions = UserDefaults.standard.savedTransactions
-                            transactions.append(newTransaction)
-                            UserDefaults.standard.saveTransactions(transactions)
+                            onSave(newTransaction)
                             
                             // Save last used account
                             if let accountID = selectedAccountID {
@@ -377,9 +404,7 @@ struct AddExpenseTransactionView: View {
     }
     
     func loadCategories() {
-        let categoryData = CategoryStorage.getCategories()
-        // Ensure we only load categories for the selected Ledger Group
-        categories = categoryData[ledgerGroup] ?? []
+        categories = categoryStore.categories
         
         if categories.isEmpty {
             selectedCategory = ""
@@ -394,9 +419,8 @@ struct AddExpenseTransactionView: View {
     }
     
     func loadSubCategories() {
-        let subCategoryData = CategoryStorage.getSubcategoriesByCategory()
-        // Collect all subcategories from every category, ensuring uniqueness and sorting
-        subCategories = Array(Set(subCategoryData.values.flatMap { $0 })).sorted()
+        categoryStore.loadSubcategories(for: selectedCategory)
+        subCategories = categoryStore.subcategories
         
         if subCategories.isEmpty {
             selectedSubCategory = ""

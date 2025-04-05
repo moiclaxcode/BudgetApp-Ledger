@@ -11,7 +11,7 @@ import SwiftUI
 struct DashboardView: View {
     @StateObject private var transactionStore = TransactionStore()
     @StateObject private var accountStore = AccountStore()
-    @State private var selectedLedgerGroup: String = UserDefaults.standard.getLedgers().first ?? ""
+    @AppStorage("selectedLedgerGroup") private var selectedLedgerGroup: String = UserDefaults.standard.getLedgers().first ?? ""
     @State private var existingLedgers: [String] = UserDefaults.standard.getLedgers()
     // Add a new state variable for showing the ledger manager
     @State private var showLedgerManager: Bool = false
@@ -42,7 +42,7 @@ struct DashboardView: View {
         }
         
         let totalAssets = filteredAccounts
-            .filter { $0.type.lowercased() == "debit" }
+            .filter { ["debit", "savings", "investments", "cash"].contains($0.type.lowercased()) }
             .map { $0.openingBalance + UserDefaults.standard.getTransactions(for: $0.id).map { $0.amount }.reduce(0, +) }
             .reduce(0, +)
         
@@ -78,14 +78,37 @@ struct DashboardView: View {
         let totalBudget = budgets.map { $0.allocatedAmount }.reduce(0, +)
  
         let transactions = transactionStore.transactions(forLedger: selectedLedgerGroup).filter {
-            $0.type.lowercased() == "expense"
+            $0.type == .expense
         }
-        let spentAmount = transactions.map { abs($0.amount) }.reduce(0, +)
+    let calendar = Calendar.current
+    let currentComponents = calendar.dateComponents([.year, .month], from: Date())
+
+    let currentMonthExpenses = transactions.filter {
+        let txnComponents = calendar.dateComponents([.year, .month], from: $0.date)
+        return txnComponents.year == currentComponents.year && txnComponents.month == currentComponents.month
+    }
+    let spentAmount = currentMonthExpenses.map { abs($0.amount) }.reduce(0, +)
  
         let remaining = max(0, totalBudget - spentAmount)
         return String(format: "$%.2f", remaining)
     }
     
+    private var spentAmount: Double {
+        let transactions = transactionStore.transactions(forLedger: selectedLedgerGroup).filter {
+            $0.type == .expense
+        }
+
+        let calendar = Calendar.current
+        let currentComponents = calendar.dateComponents([.year, .month], from: Date())
+
+        return transactions.filter {
+            let txnComponents = calendar.dateComponents([.year, .month], from: $0.date)
+            return txnComponents.year == currentComponents.year && txnComponents.month == currentComponents.month
+        }
+        .map { abs($0.amount) }
+        .reduce(0, +)
+    }
+
     private var trendData: [TrendRow] {
         let calendar = Calendar.current
         let transactions = transactionStore.transactions(forLedger: selectedLedgerGroup)
@@ -105,8 +128,8 @@ struct DashboardView: View {
                 return transactionDay <= currentDate && txnComps.month == comps.month && txnComps.year == comps.year
             }
             
-            let income = monthTransactions.filter { $0.type.lowercased() == "income" }.map { $0.amount }.reduce(0, +)
-            let expense = monthTransactions.filter { $0.type.lowercased() == "expense" }.map { abs($0.amount) }.reduce(0, +)
+            let income = monthTransactions.filter { $0.type == .income }.map { $0.amount }.reduce(0, +)
+            let expense = monthTransactions.filter { $0.type == .expense }.map { abs($0.amount) }.reduce(0, +)
             
             return TrendRow(month: "\(monthName.prefix(3)) \(year)", income: income, expense: expense)
         }
@@ -132,12 +155,12 @@ struct DashboardView: View {
             }
             
             let income = forecastTransactions
-                .filter { $0.type.lowercased() == "income" }
+                .filter { $0.type == .income }
                 .map { $0.amount }
                 .reduce(0, +)
-            
+
             let expense = forecastTransactions
-                .filter { $0.type.lowercased() == "expense" }
+                .filter { $0.type == .expense }
                 .map { abs($0.amount) }
                 .reduce(0, +)
             
@@ -148,7 +171,7 @@ struct DashboardView: View {
     var body: some View {
         ZStack {
             // Background
-            Color(#colorLiteral(red: 0.968627451, green: 0.968627451, blue: 0.968627451, alpha: 1))
+            Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
                 .edgesIgnoringSafeArea(.all)
            
             VStack {
@@ -159,7 +182,7 @@ struct DashboardView: View {
                         Button(action: {
                             showLedgerManager = true
                         }) {
-                            Text("Add new ledger")
+                            Text("Add New ledger")
                         }
                         
                         Divider()
@@ -175,14 +198,14 @@ struct DashboardView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Text(selectedLedgerGroup.isEmpty ? "Ledger" : selectedLedgerGroup)
-                                .foregroundColor(Color(#colorLiteral(red: 0.0862745098, green: 0.1137254902, blue: 0.1490196078, alpha: 1)))
+                                .foregroundColor(Color(#colorLiteral(red: 0.2470588235, green: 0.2901960784, blue: 0.3490196078, alpha: 1))) // #3f4a59
                                 .font(.caption2)
                                 .scaledToFit()
                             Image(systemName: "chevron.down")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 5, height: 5)
-                                .foregroundColor(Color(#colorLiteral(red: 0.0862745098, green: 0.1137254902, blue: 0.1490196078, alpha: 1)))
+                                .foregroundColor(Color(#colorLiteral(red: 0.2470588235, green: 0.2901960784, blue: 0.3490196078, alpha: 1))) // #3f4a59
                         }
                         .padding(.vertical, 5)
                         .padding(.horizontal, 20)
@@ -196,7 +219,7 @@ struct DashboardView: View {
                         Image(systemName: "gearshape")
                             .resizable()
                             .frame(width: 18, height: 18)
-                            .foregroundColor(Color(#colorLiteral(red: 0.0862745098, green: 0.1137254902, blue: 0.1490196078, alpha: 1)))
+                            .foregroundColor(Color(#colorLiteral(red: 0.2470588235, green: 0.2901960784, blue: 0.3490196078, alpha: 1))) // #3f4a59
                             .padding(.horizontal, 20)
                     }
                 }
@@ -207,7 +230,7 @@ struct DashboardView: View {
                     Text("Dashboard")
                         .font(.subheadline)
                         .padding(.horizontal, 30)
-                        .foregroundColor(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
+                        .foregroundColor(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
                     Divider().frame(width: 100)
                         .padding(5)
                     
@@ -216,7 +239,7 @@ struct DashboardView: View {
                     
                     Text(currentMonthYear)
                         .font(.caption2)
-                        .foregroundColor(Color(#colorLiteral(red: 0.0862745098, green: 0.1137254902, blue: 0.1490196078, alpha: 1)))
+                        .foregroundColor(Color(#colorLiteral(red: 0.2470588235, green: 0.2901960784, blue: 0.3490196078, alpha: 1))) // #3f4a59
                         .padding(.top, 5)
                 }
                 
@@ -257,40 +280,45 @@ struct DashboardView: View {
                 // Second Card: Budget Summary
                 VStack(spacing: 20) {
                     Button(action: { showBudgetCategories = true }) {
-                        HStack {
+                        VStack {
                             Text("Budget")
                                 .font(.subheadline)
-                                .foregroundColor(Color(#colorLiteral(red: 0.0862745098, green: 0.1137254902, blue: 0.1490196078, alpha: 1)))
+                                .foregroundColor(Color(#colorLiteral(red: 0.2470588235, green: 0.2901960784, blue: 0.3490196078, alpha: 1))) // #3f4a59
                             
-                            Text(totalAllocatedBudget)
-                                .foregroundColor(Color(#colorLiteral(red: 0.1568627451, green: 0.5019607843, blue: 0.1843137255, alpha: 1)))
-                                .font(.subheadline)
-            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(Color(#colorLiteral(red: 0.0862745098, green: 0.1137254902, blue: 0.1490196078, alpha: 1)))
+                            HStack(spacing: 4) {
+                                Text(totalAllocatedBudget)
+                                    .foregroundColor(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
+                                    .font(.subheadline)
+                                    .padding(10)
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
+                            }
                         }
                     }
                     
-                    // Progress Circle
-                    ZStack {
-                        Circle()
-                            .stroke(lineWidth: 8)
-                            .opacity(0.3)
-                            .foregroundColor(.gray)
-                        Circle()
-                            .trim(from: 0, to: spentPercentage)
-                            .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                            .foregroundColor(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
-                            .rotationEffect(.degrees(-90))
-                        
+                    // Budget Progress Summary
+                    VStack(alignment: .center, spacing: 8) {
                         Text("\(Int(spentPercentage * 100))%")
                             .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundColor(Color(#colorLiteral(red: 0.549, green: 0.596, blue: 0.655, alpha: 1)))
+                        
+                        ProgressView(value: Double(spentPercentage), total: 1.0)
+                            .progressViewStyle(LinearProgressViewStyle(tint: Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995)))) // #012169 80% Opacity
+                            .frame(height: 20)
+                            .scaleEffect(x: 1, y: 2)
+                        HStack {
+                            Text("Used: \(String(format: "$%.2f", spentAmount))")
+                                .font(.caption2)
+                                .foregroundColor(Color(#colorLiteral(red: 0.549, green: 0.596, blue: 0.655, alpha: 1)))
+                            Spacer()
+                            Text("Available: \(remainingBudgetString)")
+                                .font(.caption2)
+                                .foregroundColor(Color(#colorLiteral(red: 0.549, green: 0.596, blue: 0.655, alpha: 1)))
+                        }
                     }
-                    .frame(width: 100, height: 100)
+                    .padding(.horizontal)
                     
-                    Text("Available: \(remainingBudgetString)")
-                        .font(.caption2)
-                        .foregroundColor(Color(#colorLiteral(red: 0.0862745098, green: 0.1137254902, blue: 0.1490196078, alpha: 1)))
                     
                    
                 }
@@ -301,19 +329,19 @@ struct DashboardView: View {
                 
                 // Third Card: Trend Overview
                 VStack(spacing: 16) {
-                    Text("Overview")
+                    Text("Financial Analysis")
                         .font(.subheadline)
-                        .foregroundColor(Color(#colorLiteral(red: 0.086, green: 0.113, blue: 0.149, alpha: 1)))
+                        .foregroundColor(Color(#colorLiteral(red: 0.2470588235, green: 0.2901960784, blue: 0.3490196078, alpha: 1))) // #3f4a59
                     
                     HStack(spacing: 0) {
                         Button(action: { isTrendView = true }) {
                             Text("Trend")
                                 .font(.caption2)
                                 .fontWeight(isTrendView ? .bold : .regular)
-                                .foregroundColor(isTrendView ? Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) : Color(#colorLiteral(red: 0.2980392157, green: 0.3058823529, blue: 0.6078431373, alpha: 0.8018936258)))
+                                .foregroundColor(isTrendView ? Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) : Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
                                 .padding(.vertical, 4)
                                 .padding(.horizontal, 10)
-                                .background(isTrendView ? Color(#colorLiteral(red: 0.2980392157, green: 0.3058823529, blue: 0.6078431373, alpha: 0.7995)) : Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)))
+                                .background(isTrendView ? Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995)) : Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)))
                                 .cornerRadius(6, corners: [.topLeft, .bottomLeft])
                         }
                         
@@ -321,10 +349,10 @@ struct DashboardView: View {
                             Text("Forecast")
                                 .font(.caption2)
                                 .fontWeight(!isTrendView ? .bold : .regular)
-                                .foregroundColor(!isTrendView ? Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) : Color(#colorLiteral(red: 0.2980392157, green: 0.3058823529, blue: 0.6078431373, alpha: 0.8018936258)))
+                                .foregroundColor(!isTrendView ? Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) : Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
                                 .padding(.vertical, 4)
                                 .padding(.horizontal, 10)
-                                .background(!isTrendView ? Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)) : Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)))
+                                .background(!isTrendView ? Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995)) : Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)))
                                 .cornerRadius(6, corners: [.topRight, .bottomRight])
                         }
                         
@@ -385,11 +413,8 @@ struct DashboardView: View {
             }
             // MARK: - onAppear / onReceive
             .onAppear {
-                transactionStore.loadAll()
+            transactionStore.loadAll()
                 accountStore.loadAccounts()
-                if let firstLedger = UserDefaults.standard.getLedgers().first {
-                    selectedLedgerGroup = firstLedger
-                }
                 refreshTotalExpenses()
                 refreshTotalIncome()
                 refreshTotalBills()
@@ -428,25 +453,25 @@ struct DashboardView: View {
             AccountsDetailView(ledgerGroup: selectedLedgerGroup)
         }
         .sheet(isPresented: $showBudgetCategories) {
-            CategoriesView(ledgerGroup: selectedLedgerGroup)
+            CategoriesView(ledgerGroup: selectedLedgerGroup, categoryStore: CategoryStore(ledgerGroup: selectedLedgerGroup))
         }
         .sheet(isPresented: $showIncomeTransaction) {
             IncomeView(ledgerGroup: selectedLedgerGroup)
         }
         .sheet(isPresented: $showBillsView) {
-            BillsView(selectedLedgerGroup: selectedLedgerGroup)
+            BillsView(selectedLedgerGroup: selectedLedgerGroup, transactionStore: transactionStore)
         }
     }
     
     // MARK: - Helper Function for Filtering
-    private func filteredTransactions(for type: String) -> [Transaction] {
+    private func filteredTransactions(for type: TransactionType) -> [Transaction] {
         let transactions = transactionStore.transactions(forLedger: selectedLedgerGroup)
         let calendar = Calendar.current
         let currentComponents = calendar.dateComponents([.year, .month], from: Date())
         
         return transactions.filter { transaction in
             let transactionComponents = calendar.dateComponents([.year, .month], from: transaction.date)
-            return transaction.type.lowercased() == type.lowercased() &&
+            return transaction.type == type &&
                    transaction.ledgerGroup.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
                    selectedLedgerGroup.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) &&
                    transactionComponents.year == currentComponents.year &&
@@ -456,7 +481,7 @@ struct DashboardView: View {
     
     // MARK: - Refresh Total Expenses
     private func refreshTotalExpenses() {
-        let expenseTransactions = filteredTransactions(for: "expense")
+        let expenseTransactions = filteredTransactions(for: .expense)
         let total = expenseTransactions.map { abs($0.amount) }.reduce(0, +)
         
         DispatchQueue.main.async {
@@ -466,7 +491,7 @@ struct DashboardView: View {
     
     // MARK: - Refresh Total Income
     private func refreshTotalIncome() {
-        let incomeTransactions = filteredTransactions(for: "income")
+        let incomeTransactions = filteredTransactions(for: .income)
         let total = incomeTransactions.map { $0.amount }.reduce(0, +)
         
         DispatchQueue.main.async {
@@ -476,7 +501,7 @@ struct DashboardView: View {
     
     // MARK: - Refresh Total Bills
     private func refreshTotalBills() {
-        let billTransactions = filteredTransactions(for: "expense").filter {
+        let billTransactions = filteredTransactions(for: .expense).filter {
             $0.parentCategory.lowercased() == "bills"
         }
         let total = billTransactions.map { abs($0.amount) }.reduce(0, +)
@@ -496,7 +521,7 @@ struct DashboardView: View {
                 .bold()
         }
         .frame(maxWidth: 120, minHeight: 35)
-        .foregroundColor(Color(#colorLiteral(red: 0.086, green: 0.113, blue: 0.149, alpha: 1)))
+        .foregroundColor(Color(#colorLiteral(red: 0.2470588235, green: 0.2901960784, blue: 0.3490196078, alpha: 1))) // #3f4a59
     }
 
     private func calculateSpentPercentage() -> CGFloat {
@@ -507,10 +532,17 @@ struct DashboardView: View {
         let totalBudget = budgets.map { $0.allocatedAmount }.reduce(0, +)
 
         let transactions = transactionStore.transactions(forLedger: selectedLedgerGroup).filter {
-            $0.type.lowercased() == "expense"
+            $0.type == .expense
         }
         
-        let spentAmount = transactions.map { abs($0.amount) }.reduce(0, +)
+        let calendar = Calendar.current
+        let currentComponents = calendar.dateComponents([.year, .month], from: Date())
+        
+        let currentMonthExpenses = transactions.filter {
+            let txnComponents = calendar.dateComponents([.year, .month], from: $0.date)
+            return txnComponents.year == currentComponents.year && txnComponents.month == currentComponents.month
+        }
+        let spentAmount = currentMonthExpenses.map { abs($0.amount) }.reduce(0, +)
         return totalBudget > 0 ? min(spentAmount / totalBudget, 1.0) : 0
     }
 }

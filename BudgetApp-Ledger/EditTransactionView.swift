@@ -13,7 +13,7 @@ struct EditTransactionView: View {
     @State private var description: String
     @State private var date: Date
     @State private var amount: String
-    @State private var selectedTransactionType: String
+    @State private var selectedTransactionType: TransactionType
     @State private var selectedAccountID: UUID // ✅ New state to track selected account
     @State private var existingCategories: [String] = ["Food", "Rent", "Utilities", "Salary", "Investment"]
     @State private var existingAccounts: [Account] = UserDefaults.standard.getAccounts() // ✅ Fetch accounts
@@ -66,20 +66,20 @@ struct EditTransactionView: View {
                 // ✅ Fixed Transaction Type Selector (Now Updates Correctly)
                 Section(header: Text("Transaction Type")) {
                     HStack {
-                        Button(action: { selectedTransactionType = "Expense" }) {
+                        Button(action: { selectedTransactionType = .expense }) {
                             Text("Expense")
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(selectedTransactionType == "Expense" ? Color.red.opacity(0.3) : Color.clear)
+                                .background(selectedTransactionType == .expense ? Color.red.opacity(0.3) : Color.clear)
                                 .cornerRadius(8)
                         }
                         .foregroundColor(.black)
 
-                        Button(action: { selectedTransactionType = "Income" }) {
+                        Button(action: { selectedTransactionType = .income }) {
                             Text("Income")
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(selectedTransactionType == "Income" ? Color.green.opacity(0.3) : Color.clear)
+                                .background(selectedTransactionType == .income ? Color.green.opacity(0.3) : Color.clear)
                                 .cornerRadius(8)
                         }
                         .foregroundColor(.black)
@@ -125,7 +125,7 @@ struct EditTransactionView: View {
             parentCategory: parentCategory.isEmpty ? "Uncategorized" : parentCategory, // Updated reference
             description: description,
             date: date,
-            amount: selectedTransactionType == "Expense" ? -abs(transactionAmount) : abs(transactionAmount), // ✅ Ensure expenses are negative
+            amount: selectedTransactionType == .expense ? -abs(transactionAmount) : abs(transactionAmount), // ✅ Ensure expenses are negative
             accountID: selectedAccountID, // ✅ Assign the selected account
             type: selectedTransactionType // ✅ Ensure correct transaction type
         )

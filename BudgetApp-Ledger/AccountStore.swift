@@ -10,6 +10,7 @@ import SwiftUI
 
 class AccountStore: ObservableObject {
     @Published var accounts: [Account] = []
+    @Published var transactions: [Transaction] = []
 
     init() {
         loadAccounts()

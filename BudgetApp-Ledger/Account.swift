@@ -15,8 +15,30 @@ struct Account: Identifiable, Codable, Hashable { // ✅ Added Hashable
     var openingBalance: Double
     var asOfDate: Date
     var ledgerGroup: String
-
-    init(id: UUID = UUID(), name: String, type: String, description: String, openingBalance: Double, asOfDate: Date, ledgerGroup: String) {
+    
+    // New properties for Credit accounts
+    var creditLimit: Double?
+    var statementBalance: Double?
+    var billingDate: Date?
+    var dueDate: Date?
+    
+    // New property for notes
+    var notes: String?
+    
+    init(
+        id: UUID = UUID(),
+        name: String,
+        type: String,
+        description: String,
+        openingBalance: Double,
+        asOfDate: Date,
+        ledgerGroup: String,
+        creditLimit: Double? = nil,
+        statementBalance: Double? = nil,
+        billingDate: Date? = nil,
+        dueDate: Date? = nil,
+        notes: String? = nil
+    ) {
         self.id = id
         self.name = name
         self.type = type // ✅ Needed for grouping in AccountManagerView
@@ -24,13 +46,18 @@ struct Account: Identifiable, Codable, Hashable { // ✅ Added Hashable
         self.openingBalance = openingBalance
         self.asOfDate = asOfDate
         self.ledgerGroup = ledgerGroup
+        self.creditLimit = creditLimit
+        self.statementBalance = statementBalance
+        self.billingDate = billingDate
+        self.dueDate = dueDate
+        self.notes = notes
     }
-
+    
     // ✅ Conforming to Hashable
     static func == (lhs: Account, rhs: Account) -> Bool {
         return lhs.id == rhs.id
     }
-
+    
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }

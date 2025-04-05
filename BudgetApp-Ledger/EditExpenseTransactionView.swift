@@ -153,7 +153,7 @@ struct EditExpenseTransactionView: View {
             date: date,
             amount: -abs(transactionAmount), // ✅ Ensure expenses are saved as negative
             accountID: selectedAccountID,
-            type: "Expense",
+            type: .expense,
             ledgerGroup: selectedLedgerGroup, // ✅ Ensures transaction is updated under the correct Ledger Group
             payee: payee // ✅ Include payee
         )

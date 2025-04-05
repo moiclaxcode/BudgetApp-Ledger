@@ -16,7 +16,7 @@ struct AddTransactionView: View {
     @State private var description: String = ""
     @State private var date: Date = Date()
     @State private var amount: String = ""
-    @State private var selectedTransactionType: String = "Expense"
+    @State private var selectedTransactionType: TransactionType = .expense
 
     @State private var selectedAccountID: UUID?
     @State private var accounts: [Account] = [] // ✅ Fetch accounts dynamically
@@ -57,20 +57,20 @@ struct AddTransactionView: View {
 
                 Section(header: Text("Transaction Type")) { // ✅ Fixed Transaction Type Selector
                     HStack {
-                        Button(action: { selectedTransactionType = "Expense" }) {
+                        Button(action: { selectedTransactionType = .expense }) {
                             Text("Expense")
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(selectedTransactionType == "Expense" ? Color.red.opacity(0.3) : Color.clear)
+                                .background(selectedTransactionType == .expense ? Color.red.opacity(0.3) : Color.clear)
                                 .cornerRadius(8)
                         }
                         .foregroundColor(.black)
 
-                        Button(action: { selectedTransactionType = "Income" }) {
+                        Button(action: { selectedTransactionType = .income }) {
                             Text("Income")
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(selectedTransactionType == "Income" ? Color.green.opacity(0.3) : Color.clear)
+                                .background(selectedTransactionType == .income ? Color.green.opacity(0.3) : Color.clear)
                                 .cornerRadius(8)
                         }
                         .foregroundColor(.black)
@@ -139,7 +139,7 @@ struct AddTransactionView: View {
             parentCategory: category.isEmpty ? "Uncategorized" : category, // ✅ Updated reference
             description: description,
             date: date,
-            amount: selectedTransactionType == "Expense" ? -abs(transactionAmount) : abs(transactionAmount), // ✅ Ensure expenses are negative
+            amount: selectedTransactionType == .expense ? -abs(transactionAmount) : abs(transactionAmount), // ✅ Ensure expenses are negative
             accountID: selectedAccountID, // ✅ Updated to reflect selected account
             type: selectedTransactionType
         )

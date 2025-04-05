@@ -23,8 +23,8 @@ struct StatsRow: View {
 
         stats = sortedMonths.map { month in
             let transactions = groupedByMonth[month] ?? []
-            let income = transactions.filter { $0.type == "Income" }.reduce(0) { $0 + $1.amount }
-            let expenses = transactions.filter { $0.type == "Expense" }.reduce(0) { $0 + $1.amount }
+            let income = transactions.filter { $0.type == .income }.reduce(0) { $0 + $1.amount }
+            let expenses = transactions.filter { $0.type == .expense }.reduce(0) { $0 + $1.amount }
             let balance = income - expenses
             return (month, income, expenses, balance)
         }

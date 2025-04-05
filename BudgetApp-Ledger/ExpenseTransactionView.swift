@@ -39,7 +39,7 @@ struct ExpenseTransactionView: View {
         transactions = allTransactions.filter { transaction in
             let transactionMonth = calendar.component(.month, from: transaction.date)
             let transactionYear = calendar.component(.year, from: transaction.date)
-            return transaction.type.lowercased() == "expense" &&
+            return transaction.type == .expense &&
                    transaction.ledgerGroup.lowercased() == ledgerGroup.lowercased() &&  // Filter by ledger group
                    transactionMonth == selectedMonth &&
                    transactionYear == selectedYear
@@ -115,7 +115,7 @@ struct ExpenseTransactionView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(#colorLiteral(red: 0.968627451, green: 0.968627451, blue: 0.968627451, alpha: 1))
+                Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 0) {
@@ -153,7 +153,7 @@ struct ExpenseTransactionView: View {
                     
                     Divider()
                         .frame(height: 0.5)
-                        .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
+                        .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
                         .padding(.horizontal)
                     
                     // Scrollable Transactions List
@@ -163,7 +163,7 @@ struct ExpenseTransactionView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 40)
                                 .padding(.top, 5)
-                                .foregroundColor(Color(#colorLiteral(red: 0.768627451, green: 0.07058823529, blue: 0.1921568627, alpha: 1)))
+                                .foregroundColor(Color(#colorLiteral(red: 0.8901960784, green: 0.09411764706, blue: 0.2156862745, alpha: 1))) // #E31837
                             
                             VStack(spacing: 10) {
                                 ForEach(groupedTransactions, id: \.group) { group in
@@ -174,42 +174,53 @@ struct ExpenseTransactionView: View {
                                         )
                                     ) {
                                         ForEach(group.transactions, id: \.id) { transaction in
-                                            // Use shared TransactionRow view.
-                                            HStack {
-                                                TransactionRow(
-                                                    transaction: transaction,
-                                                    runningBalance: nil,
-                                                    selectedGrouping: selectedGrouping,
-                                                    showPayFrom: true
-                                                )
-                                                Spacer()
-                                            }
-                                            .contentShape(Rectangle())
-                                            .onTapGesture {
-                                                selectedTransaction = transaction
-                                                showEditExpenseView = true
+                                            VStack(spacing: 0) {
+                                                HStack {
+                                                    TransactionRow(
+                                                        transaction: transaction,
+                                                        runningBalance: nil,
+                                                        selectedGrouping: selectedGrouping,
+                                                        showPayFrom: true
+                                                    )
+                                                    Spacer()
+                                                }
+                                                .contentShape(Rectangle())
+                                                .onTapGesture {
+                                                    selectedTransaction = transaction
+                                                    showEditExpenseView = true
+                                                }
+                                                Divider()
+                                                    .frame(height: 0.1)
                                             }
                                         }
                                     } label: {
-                                        Text(group.group)
-                                            .font(.caption)
-                                            .foregroundColor(Color(#colorLiteral(red: 0.5490196078, green: 0.5960784314, blue: 0.6549019608, alpha: 1)))
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(group.group)
+                                                .font(.caption2)
+                                                .foregroundColor(Color(#colorLiteral(red: 0.5490196078, green: 0.5960784314, blue: 0.6549019608, alpha: 1)))
+                                            Divider()
+                                                .frame(width: 70, height: 0.75)
+                                                .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
+                                                .padding(.bottom, 5)
+                                        }
                                     }
-                                    .padding()
-                                    .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)))
-                                    .cornerRadius(8)
+                                    .padding(8)
+                                    .padding(.horizontal, 10)
+                                    .background(Color.white) //Background for row list
+                                    .cornerRadius(5)
+                                    .shadow(color: Color.gray.opacity(0.3), radius: 2, y: 1)
                                 }
                             }
-                            .padding()
-                            .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)))
+                            .padding(.bottom, 10)
+                            .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) // #F7F7F7 Background behind list
                             .cornerRadius(8)
-                            .padding(.horizontal)
+                            .padding(.horizontal, 20)
                         }
                     }
                     
                     Divider()
                         .frame(height: 0.5)
-                        .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
+                        .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
                         .padding(.horizontal)
                     
                     // Footer: Grouping Buttons (only "Day" and "Month")
@@ -224,7 +235,7 @@ struct ExpenseTransactionView: View {
                         Button(action: { showAddExpenseTransactionView = true }) {
                             Image(systemName: "plus.circle")
                                 .imageScale(.large)
-                                .foregroundColor(Color(#colorLiteral(red: 0.768627451, green: 0.07058823529, blue: 0.1921568627, alpha: 1)))
+                                .foregroundColor(Color(#colorLiteral(red: 0.8901960784, green: 0.09411764706, blue: 0.2156862745, alpha: 1))) // #E31837
                         }
                         .padding(.vertical, 60)
                         .padding(.horizontal, 20)
@@ -237,15 +248,47 @@ struct ExpenseTransactionView: View {
                 loadTransactions()
             }
             .sheet(isPresented: $showAddExpenseTransactionView, onDismiss: { loadTransactions() }) {
-                AddExpenseTransactionView(ledgerGroup: ledgerGroup, onSave: { _ in loadTransactions() })
+                AddExpenseTransactionView(ledgerGroup: ledgerGroup, onSave: { transaction in
+                     // Persist to ledger transactions
+                     var ledgerTransactions = UserDefaults.standard.getTransactions(for: ledgerGroup)
+                     ledgerTransactions.append(transaction)
+                     UserDefaults.standard.saveExpenseTransactions(ledgerTransactions)
+                     
+                     // Persist to account transactions
+                     var accountTransactions = UserDefaults.standard.getAllAccountTransactions()
+                     accountTransactions.append(transaction)
+                     UserDefaults.standard.saveTransactions(accountTransactions)
+                     
+                     loadTransactions()
+                })
             }
             .sheet(isPresented: $showEditExpenseView) {
                 if let transactionToEdit = selectedTransaction {
-                    AddExpenseTransactionView(
-                        ledgerGroup: ledgerGroup,
-                        existingTransaction: transactionToEdit,
-                        onSave: { _ in loadTransactions() }
-                    )
+                     AddExpenseTransactionView(
+                         ledgerGroup: ledgerGroup,
+                         existingTransaction: transactionToEdit,
+                         onSave: { transaction in
+                             // Update ledger transactions
+                             var ledgerTransactions = UserDefaults.standard.getTransactions(for: ledgerGroup)
+                             if let index = ledgerTransactions.firstIndex(where: { $0.id == transaction.id }) {
+                                 ledgerTransactions[index] = transaction
+                             } else {
+                                 ledgerTransactions.append(transaction)
+                             }
+                             UserDefaults.standard.saveExpenseTransactions(ledgerTransactions)
+                             
+                             // Update account transactions
+                             var accountTransactions = UserDefaults.standard.getAllAccountTransactions()
+                             if let index = accountTransactions.firstIndex(where: { $0.id == transaction.id }) {
+                                 accountTransactions[index] = transaction
+                             } else {
+                                 accountTransactions.append(transaction)
+                             }
+                             UserDefaults.standard.saveTransactions(accountTransactions)
+                             
+                             loadTransactions()
+                         }
+                     )
                 }
             }
             .alert(isPresented: $showDeleteConfirmation) {
@@ -268,12 +311,12 @@ struct ExpenseTransactionView: View {
     private var totalExpensesSection: some View {
         VStack(spacing: 5) {
             Divider().frame(width: 100, height: 0.5)
-                .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
+                .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
             Text("$\(totalExpenses, specifier: "%.2f")")
                 .font(.headline)
-                .foregroundColor(Color(#colorLiteral(red: 0.768627451, green: 0.07058823529, blue: 0.1921568627, alpha: 1)))
+                .foregroundColor(Color(#colorLiteral(red: 0.8901960784, green: 0.09411764706, blue: 0.2156862745, alpha: 1))) // #E31837
             Divider().frame(width: 100, height: 0.5)
-                .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
+                .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
         }
         .padding(5)
     }
@@ -287,13 +330,13 @@ struct ExpenseTransactionView: View {
                         .foregroundColor(
                             selectedGrouping == period
                             ? Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) // fontColor (#f2f8fd) for day and month (Selected)
-                            : Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)) // fontColor for day and month (Unselected)
+                            : Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995)) // fontColor for day and month (Unselected) #012169
                         )
                         .padding(5)
                         .background(
                             selectedGrouping == period
-                            ? Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.8012727649)) // Background for day and month (Selected)
-                            : Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)) // Background for day and month (Unselected)
+                            ? Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.8012727649)) // Background for day and month (Selected) #012169
+                            : Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) // Background for day and month (Unselected)
                         )
                         .cornerRadius(5)
                         
@@ -303,7 +346,7 @@ struct ExpenseTransactionView: View {
         .frame(width:90)
         .padding(.vertical, 3)
         .padding(.horizontal, 3)
-        .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) // background behind day and month
+        .background(Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1))) // background behind day and month
         .cornerRadius(5)
         .padding(.vertical, 10)
         .padding(.horizontal, 10)

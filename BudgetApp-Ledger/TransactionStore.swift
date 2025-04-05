@@ -20,6 +20,13 @@ class TransactionStore: ObservableObject {
         transactions = UserDefaults.standard.getTransactions(for: id)
     }
 
+    // Load transactions for a specific ledger group
+    func load(forLedgerGroup ledgerGroup: String) {
+        transactions = UserDefaults.standard.savedTransactions.filter {
+            $0.ledgerGroup == ledgerGroup
+        }
+    }
+
     // Load all transactions without filtering
     func loadAll() {
         transactions = UserDefaults.standard.savedTransactions
@@ -27,8 +34,6 @@ class TransactionStore: ObservableObject {
 
     // Save or update a transaction
     func save(_ transaction: Transaction, for accountID: UUID?) {
-        guard let id = accountID else { return }
-
         var all = UserDefaults.standard.savedTransactions
         if let index = all.firstIndex(where: { $0.id == transaction.id }) {
             all[index] = transaction
@@ -36,17 +41,25 @@ class TransactionStore: ObservableObject {
             all.append(transaction)
         }
         UserDefaults.standard.saveTransactions(all)
-        load(for: id)
+
+        if let id = accountID {
+            load(for: id)
+        } else {
+            load(forLedgerGroup: transaction.ledgerGroup)
+        }
     }
 
     // Delete a transaction
     func delete(_ transaction: Transaction, for accountID: UUID?) {
-        guard let id = accountID else { return }
-
         var all = UserDefaults.standard.savedTransactions
         all.removeAll { $0.id == transaction.id }
         UserDefaults.standard.saveTransactions(all)
-        load(for: id)
+
+        if let id = accountID {
+            load(for: id)
+        } else {
+            load(forLedgerGroup: transaction.ledgerGroup)
+        }
     }
 
     // Filter transactions by month and year

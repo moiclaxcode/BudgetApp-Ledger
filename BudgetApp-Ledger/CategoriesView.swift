@@ -16,6 +16,7 @@ struct IdentifiableCategory: Identifiable {
 
 struct CategoriesView: View {
     var ledgerGroup: String
+    @ObservedObject var categoryStore: CategoryStore
     @State private var categories: [String] = []
     @State private var newCategoryName: String = ""
     @State private var isAddingCategory: Bool = false // Controls visibility of text field
@@ -121,8 +122,10 @@ struct CategoriesView: View {
                 .onMove(perform: moveCategory)
             }
             .listStyle(InsetGroupedListStyle())
+            .shadow(color: Color.gray.opacity(0.3), radius: 2, y: 1)
             .scrollContentBackground(.hidden)  // Hides default background (iOS 16+)
-            .background(Color("YourCustomBackgroundColor")) // Customize background behind the list
+            .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) // Customize background behind the list
+            
         }
     }
     
@@ -130,7 +133,7 @@ struct CategoriesView: View {
         NavigationView {
             ZStack {
                 // Background for the entire view.
-                Color(#colorLiteral(red: 0.9686, green: 0.9686, blue: 0.9686, alpha: 1))
+                Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack {
@@ -267,7 +270,8 @@ struct CategoriesView: View {
         .sheet(item: $selectedCategory) { category in
             SubcategoriesView(
                 selectedCategory: category.name,
-                ledgerGroup: ledgerGroup
+                ledgerGroup: ledgerGroup,
+                categoryStore: categoryStore
             )
         }
     }
@@ -356,6 +360,9 @@ struct CategoriesView: View {
 
 struct CategoriesView_Previews: PreviewProvider {
     static var previews: some View {
-        CategoriesView(ledgerGroup: "Sample Ledger")
+        CategoriesView(
+            ledgerGroup: "Sample Ledger",
+            categoryStore: CategoryStore(ledgerGroup: "Sample Ledger")
+        )
     }
 }

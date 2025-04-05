@@ -78,153 +78,15 @@ struct IncomeView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background
-                Color(#colorLiteral(red: 0.968627451, green: 0.968627451, blue: 0.968627451, alpha: 1))
+                // Background color
+                Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
                     .edgesIgnoringSafeArea(.all)
                 
-                VStack(spacing: 0) {
-                    // MARK: - Header (Pinned at Top)
-                    VStack(spacing: 5) {
-                        // Total Income
-                        Divider().frame(width: 100, height: 0.5)
-                            .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
-                            
-                            .padding(.top, 10)
-                        Text("$\(totalIncome, specifier: "%.2f")")
-                            .font(.headline)
-                            .bold()
-                            .foregroundColor(Color(#colorLiteral(red: 0.1568627451, green: 0.5019607843, blue: 0.1843137255, alpha: 1)))
-                        Divider().frame(width: 100, height: 0.5)
-                            .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
-                           
-    
-                        // Month-Year header with left/right arrows
-                        HStack {
-                            Button(action: {
-                                currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
-                                loadTransactions()
-                            }) {
-                                Image(systemName: "chevron.left.circle")
-                                    .imageScale(.medium)
-                                    .foregroundColor(
-                                        Color(#colorLiteral(red: 0.5490196078,
-                                                            green: 0.5960784314,
-                                                            blue: 0.6549019608,
-                                                            alpha: 1))
-                                    )
-                            }
-                            Spacer()
-                            Text(formattedMonth(currentMonth))
-                                .font(.caption)
-                                .foregroundColor(
-                                    Color(#colorLiteral(red: 0.3294117647,
-                                                        green: 0.3568627451,
-                                                        blue: 0.3921568627,
-                                                        alpha: 1))
-                                )
-                            Spacer()
-                            Button(action: {
-                                currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
-                                loadTransactions()
-                            }) {
-                                Image(systemName: "chevron.right.circle")
-                                    .imageScale(.medium)
-                                    .foregroundColor(
-                                        Color(#colorLiteral(red: 0.5490196078,
-                                                            green: 0.5960784314,
-                                                            blue: 0.6549019608,
-                                                            alpha: 1))
-                                    )
-                            }
-                        }
-                        .padding(5)
-                        .padding(.horizontal, 120)
-                    }
-                    .padding(.vertical, 10)
-                    
-                    Divider()
-                        .frame(height: 0.5)
-                        .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
-                        .padding(.horizontal)
-                    
-                    // MARK: - Scrollable Transactions (Middle)
-                    ScrollView {
-                        VStack(alignment: .leading) {
-                            Text("Income")
-                                .font(.caption)
-                                .padding(.horizontal, 40)
-                                .padding(.top, 5)
-                                .foregroundColor(
-                                    Color(#colorLiteral(red: 0.1568627451, green: 0.5019607843, blue: 0.1843137255, alpha: 1))
-                                )
-                            
-                            VStack(spacing: 10) {
-                                ForEach(groupedTransactions, id: \.group) { group in
-                                    DisclosureGroup(
-                                        isExpanded: Binding(
-                                            get: { disclosureExpandedStates[group.group] ?? true },
-                                            set: { disclosureExpandedStates[group.group] = $0 }
-                                        )
-                                    ) {
-                                        ForEach(group.transactions, id: \.id) { transaction in
-                                            // Single row
-                                            HStack {
-                                                transactionRow(transaction)
-                                                Spacer()
-                                            }
-                                            .contentShape(Rectangle())
-                                            .onTapGesture {
-                                                selectedTransaction = transaction
-                                                showEditIncomeView = true
-                                            }
-                                        }
-                                    } label: {
-                                        Text(group.group)
-                                            .font(.caption)
-                                            .foregroundColor(
-                                                Color(#colorLiteral(red: 0.5490196078,
-                                                                    green: 0.5960784314,
-                                                                    blue: 0.6549019608,
-                                                                    alpha: 1))
-                                            )
-                                    }
-                                    .padding()
-                                    .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)))
-                                    .cornerRadius(8)
-                                }
-                            }
-                            .padding()
-                            .background(Color(#colorLiteral(red: 0.968627451, green: 0.968627451, blue: 0.968627451, alpha: 1)))
-                            .cornerRadius(8)
-                            .padding(.horizontal)
-                        }
-                    }
-                    
-                    Divider()
-                        .frame(height: 0.5)
-                        .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
-                        .padding(.horizontal)
-                    
-                    // MARK: - Footer (Pinned at Bottom)
-                    groupingButtons
-                }
+                // Main vertical stack
+                mainContent
                 
-                // MARK: - Floating Add Button
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: { showAddIncomeTransactionView = true }) {
-                            Image(systemName: "plus.circle")
-                                .imageScale(.large)
-                                .foregroundColor(
-                                    Color(#colorLiteral(red: 0.1568627451, green: 0.5019607843, blue: 0.1843137255, alpha: 1))
-                                )
-                        }
-                        .padding(.vertical, 60)
-                        .padding(.horizontal, 20)
-                    }
-                }
+                // Floating Add button
+                floatingAddButton
             }
             .navigationBarHidden(true)
             .onAppear {
@@ -233,7 +95,7 @@ struct IncomeView: View {
             .onReceive(NotificationCenter.default.publisher(for: .transactionUpdated)) { _ in
                 loadTransactions()
             }
-            // MARK: - Sheets
+            // Sheets
             .sheet(isPresented: $showAddIncomeTransactionView, onDismiss: {
                 loadTransactions()
             }) {
@@ -250,7 +112,7 @@ struct IncomeView: View {
                     )
                 }
             }
-            // MARK: - Delete Confirmation
+            // Delete Confirmation
             .alert(isPresented: $showDeleteConfirmation) {
                 Alert(
                     title: Text("Delete Income?"),
@@ -266,35 +128,196 @@ struct IncomeView: View {
         }
     }
     
-    // MARK: - Load Transactions
-    private func loadTransactions() {
-        // Combine account transactions + all income transactions, then filter
-        let accountTx = UserDefaults.standard.getAllAccountTransactions()
-        let ledgerTx = UserDefaults.standard.getIncomeTransactions().filter {
-            $0.ledgerGroup == ledgerGroup
-        }
-        
-        let merged = Array(Set(accountTx + ledgerTx))
-        
-        let calendar = Calendar.current
-        let selectedMonth = calendar.component(.month, from: currentMonth)
-        let selectedYear = calendar.component(.year, from: currentMonth)
-        
-        incomeTransactions = merged.filter { transaction in
-            let transactionMonth = calendar.component(.month, from: transaction.date)
-            let transactionYear = calendar.component(.year, from: transaction.date)
-            return transaction.type.lowercased() == "income" &&
-                   transaction.ledgerGroup == ledgerGroup &&
-                   transactionMonth == selectedMonth &&
-                   transactionYear == selectedYear
+    // MARK: - Main Content (Split out of body)
+    private var mainContent: some View {
+        VStack(spacing: 0) {
+            headerView
+            Divider()
+                .frame(height: 0.5)
+                .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
+                .padding(.horizontal)
+            
+            transactionsSection
+            
+            Divider()
+                .frame(height: 0.5)
+                .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
+                .padding(.horizontal)
+            
+            footerView
         }
     }
     
-    // MARK: - Formatted Month
-    private func formattedMonth(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: date)
+    // MARK: - Header View
+    private var headerView: some View {
+        VStack(spacing: 5) {
+            Divider().frame(width: 100, height: 0.5)
+                .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
+                .padding(.top, 10)
+            
+            Text("$\(totalIncome, specifier: "%.2f")")
+                .font(.headline)
+                .bold()
+                .foregroundColor(Color(#colorLiteral(red: 0.1568627451, green: 0.5019607843, blue: 0.1843137255, alpha: 1)))
+            
+            Divider().frame(width: 100, height: 0.5)
+                .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% opacity
+            
+            // Month-Year header with left/right arrows
+            HStack {
+                Button(action: {
+                    currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
+                    loadTransactions()
+                }) {
+                    Image(systemName: "chevron.left.circle")
+                        .imageScale(.medium)
+                        .foregroundColor(
+                            Color(#colorLiteral(red: 0.5490196078,
+                                                green: 0.5960784314,
+                                                blue: 0.6549019608,
+                                                alpha: 1))
+                        )
+                }
+                Spacer()
+                Text(formattedMonth(currentMonth))
+                    .font(.caption)
+                    .foregroundColor(
+                        Color(#colorLiteral(red: 0.3294117647,
+                                            green: 0.3568627451,
+                                            blue: 0.3921568627,
+                                            alpha: 1))
+                    )
+                Spacer()
+                Button(action: {
+                    currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
+                    loadTransactions()
+                }) {
+                    Image(systemName: "chevron.right.circle")
+                        .imageScale(.medium)
+                        .foregroundColor(
+                            Color(#colorLiteral(red: 0.5490196078,
+                                                green: 0.5960784314,
+                                                blue: 0.6549019608,
+                                                alpha: 1))
+                        )
+                }
+            }
+            .padding(5)
+            .padding(.horizontal, 120)
+        }
+        .padding(.vertical, 10)
+    }
+    
+    // MARK: - Transactions Section
+    private var transactionsSection: some View {
+        ScrollView {
+            VStack(alignment: .leading) {
+                Text("Income")
+                    .font(.caption)
+                    .padding(.horizontal, 40)
+                    .padding(.top, 5)
+                    .foregroundColor(
+                        Color(#colorLiteral(red: 0.1568627451, green: 0.5019607843, blue: 0.1843137255, alpha: 1))
+                    )
+                
+                VStack(spacing: 10) {
+                    ForEach(groupedTransactions, id: \.group) { group in
+                        DisclosureGroup(
+                            isExpanded: Binding(
+                                get: { disclosureExpandedStates[group.group] ?? true },
+                                set: { disclosureExpandedStates[group.group] = $0 }
+                            )
+                        ) {
+                            ForEach(group.transactions, id: \.id) { transaction in
+                                // Single row
+                                VStack(spacing: 0){
+                                    HStack {
+                                        transactionRow(transaction)
+                                        Spacer()
+                                    }
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        selectedTransaction = transaction
+                                        showEditIncomeView = true
+                                    }
+                                    Divider()
+                                        .frame(height: 0.1)
+                                }
+                            }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(group.group)
+                                    .font(.caption2)
+                                    .foregroundColor(Color(#colorLiteral(red: 0.5490196078, green: 0.5960784314, blue: 0.6549019608, alpha: 1)))
+                                        Divider()
+                                    .frame(width: 70, height: 0.40)
+                                    .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
+                                    .padding(.bottom, 5)
+                            }
+                        }
+                        .padding(8)
+                        .padding(.horizontal, 10)
+                        .background(Color.white) // Background for row list
+                        .cornerRadius(5)
+                        .shadow(color: Color.gray.opacity(0.3), radius: 2, y: 1)
+                    }
+                }
+                .padding(.bottom, 10)
+                .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) // #F7F7F7 Background behind list
+                .cornerRadius(8)
+                .padding(.horizontal, 20)
+            }
+        }
+    }
+    
+    // MARK: - Footer View
+    private var footerView: some View {
+        HStack {
+            ForEach(["Day", "Month"], id: \.self) { period in
+                Button(action: { selectedGrouping = period }) {
+                    Text(period)
+                        .font(.caption2)
+                        .foregroundColor(
+                            selectedGrouping == period
+                            ? Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) // fontColor (Selected)
+                            : Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995)) // fontColor (Unselected) #012169 80% Opacity
+                        )
+                        .padding(5)
+                        .background(
+                            selectedGrouping == period
+                            ? Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.8013503725)) // Background (Selected) #012169 80% Opacity
+                            : Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) // Background (Unselected)
+                        )
+                        .cornerRadius(5)
+                }
+            }
+        }
+        .frame(width: 90)
+        .padding(.vertical, 3)
+        .padding(.horizontal, 3)
+        .background(Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1))) // background behind day and month
+        .cornerRadius(5)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 10)
+    }
+    
+    // MARK: - Floating Add Button
+    private var floatingAddButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button(action: { showAddIncomeTransactionView = true }) {
+                    Image(systemName: "plus.circle")
+                        .imageScale(.large)
+                        .foregroundColor(
+                            Color(#colorLiteral(red: 0.1568627451, green: 0.5019607843, blue: 0.1843137255, alpha: 1))
+                        )
+                }
+                .padding(.vertical, 60)
+                .padding(.horizontal, 20)
+            }
+        }
     }
     
     // MARK: - Transaction Row
@@ -329,25 +352,46 @@ struct IncomeView: View {
             Text("$\(abs(transaction.amount), specifier: "%.2f")")
                 .font(.caption)
                 .foregroundColor(Color(#colorLiteral(red: 0.1568627451, green: 0.5019607843, blue: 0.1843137255, alpha: 1)))
-            // Ellipsis menu or remove if you prefer a single-tap to edit
-//            Menu {
-//                Button(action: {
-//                    selectedTransaction = transaction
-//                    showEditIncomeView = true
-//                }) {
-//                    Label("Edit", systemImage: "pencil")
-//                }
-//                Button(role: .destructive, action: {
- //                   confirmDeleteTransaction(transaction)
-//                }) {
-//                    Label("Delete", systemImage: "trash")
-//                }
-//            } label: {
-//                Image(systemName: "ellipsis")
-//                    .foregroundColor(Color(#colorLiteral(red: 0.5490196078, green: 0.5960784314, blue: 0.6549019608, alpha: 1)))
-//            }
         }
         .padding(.vertical, 1)
+    }
+    
+    // MARK: - Load Transactions
+    private func loadTransactions() {
+        // Combine account transactions + all income transactions, then filter
+        let accountTx = UserDefaults.standard.getAllAccountTransactions()
+        let ledgerTx = UserDefaults.standard.getIncomeTransactions().filter {
+            $0.ledgerGroup == ledgerGroup
+        }
+        
+        let merged = Array(Set(accountTx + ledgerTx))
+        
+        let calendar = Calendar.current
+        let selectedMonth = calendar.component(.month, from: currentMonth)
+        let selectedYear = calendar.component(.year, from: currentMonth)
+        
+        incomeTransactions = merged.filter { transaction in
+            let transactionMonth = calendar.component(.month, from: transaction.date)
+            let transactionYear = calendar.component(.year, from: transaction.date)
+            return transaction.type == .income &&
+                   transaction.ledgerGroup == ledgerGroup &&
+                   transactionMonth == selectedMonth &&
+                   transactionYear == selectedYear
+        }
+    }
+    
+    // MARK: - Formatted Month
+    private func formattedMonth(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: date)
+    }
+    
+    // MARK: - Short Date
+    private func shortDateFormatted(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: date)
     }
     
     // MARK: - Confirm Delete
@@ -362,45 +406,9 @@ struct IncomeView: View {
         UserDefaults.standard.saveIncomeTransactions(incomeTransactions)
         loadTransactions()
     }
-    
-    // MARK: - Short Date
-    private func shortDateFormatted(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: date)
-    }
-    
-    // MARK: - Grouping Buttons
-    private var groupingButtons: some View {
-        HStack {
-            ForEach(["Day", "Month"], id: \.self) { period in
-                Button(action: { selectedGrouping = period }) {
-                    Text(period)
-                        .font(.caption2)
-                        .foregroundColor(
-                            selectedGrouping == period
-                            ? Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1)) // fontColor (#f2f8fd) for day and month (Selected)
-                            : Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)) // fontColor for day and month (Unselected)
-                        )
-                        .padding(5)
-                        .background(
-                            selectedGrouping == period
-                            ? Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.8013503725)) // Background for day and month (Selected)
-                            : Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)) // Background for day and month (Unselected)
-                        )
-                        .cornerRadius(5)
-                }
-            }
-        }
-        .frame(width:90)
-        .padding(.vertical, 3)
-        .padding(.horizontal, 3)
-        .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) // background behind day and month
-        .cornerRadius(5)
-        .padding(.vertical, 10)
-        .padding(.horizontal, 10)
-    }
 }
+
+// MARK: - Preview
 struct IncomeView_Previews: PreviewProvider {
     static var previews: some View {
         IncomeView(ledgerGroup: "Sample Ledger")
