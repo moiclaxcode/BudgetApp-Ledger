@@ -36,9 +36,10 @@ struct TransferFundsView: View {
         NavigationView {
             ZStack {
                 // Background
-                Color(#colorLiteral(red: 0.968627451, green: 0.968627451, blue: 0.968627451, alpha: 1))
+                Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)) // #FFFFFF
                     .edgesIgnoringSafeArea(.all)
                 VStack(spacing: 20) {
+                    Divider()
                     HStack {
                         VStack(alignment: .center) {
                             Text("Date")
@@ -56,7 +57,7 @@ struct TransferFundsView: View {
                                 .multilineTextAlignment(.center)
                                 .foregroundColor(Color(#colorLiteral(red: 0.0862745098, green: 0.1137254902, blue: 0.1490196078, alpha: 0.8008847268)))
                                 .frame(width: 120)
-                                .padding(.vertical, 10)
+                                .padding(.vertical, 6)
                                 .padding(.horizontal, 3)
                                 .background(Color.gray.opacity(0.1))
                                 .cornerRadius(5)
@@ -132,8 +133,7 @@ struct TransferFundsView: View {
                                 showDeleteAlert = true
                             }) {
                                 Image(systemName: "trash.circle")
-                                    .resizable()
-                                    .frame(width: 25, height: 25)
+                                    .imageScale(.large)
                                     .foregroundColor(Color(#colorLiteral(red: 0.5490196078, green: 0.5960784314, blue: 0.6549019608, alpha: 1))) // #8C98A7
                                     .padding()
                             }

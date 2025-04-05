@@ -76,8 +76,6 @@ struct AddExpenseTransactionView: View {
             
                 VStack(spacing: 20) {
                     Divider()// Top Divider for structure
-                        .frame(height: 0.5)
-                        .background(Color(#colorLiteral(red: 0.298, green: 0.3059, blue: 0.6078, alpha: 0.7995)))
                         .padding(.horizontal)
                     
                     // Category & Subcategory Row
@@ -113,7 +111,7 @@ struct AddExpenseTransactionView: View {
                                         .frame(width: 10, height: 10)
                                         .foregroundColor(Color.gray)
                                 }
-                                .frame(width:130)
+                                .frame(width:160)
                                 .padding(.vertical, 10)
                                 .padding(.horizontal, 3)
                                 .background(Color.gray.opacity(0.1))
@@ -140,7 +138,7 @@ struct AddExpenseTransactionView: View {
                                         .frame(width: 10, height: 10)
                                         .foregroundColor(.gray)
                                 }
-                                .frame(width:130)
+                                .frame(width:160)
                                 .padding(.vertical, 10)
                                 .padding(.horizontal, 3)
                                 .background(Color.gray.opacity(0.1))
@@ -159,7 +157,7 @@ struct AddExpenseTransactionView: View {
                                 DatePicker("", selection: $date, displayedComponents: .date)
                                     .font(.subheadline)
                                     .labelsHidden()
-                                    .frame(width:130)
+                                    .frame(width:160)
                                     .padding(.vertical, 1)
                                     .padding(.horizontal, 3)
                             }
@@ -178,7 +176,7 @@ struct AddExpenseTransactionView: View {
                                 .multilineTextAlignment(.center)
                                 .padding(.vertical, 7)
                                 .padding(.horizontal, 8)
-                                .frame(width: 130)
+                                .frame(width: 160)
                                 .background(Color.gray.opacity(0.1))
                                 .cornerRadius(5)
                                 .onChange(of: amount) { _, newValue in
@@ -197,16 +195,17 @@ struct AddExpenseTransactionView: View {
                                             selectedAccountID = account.id
                                         }) {
                                             Text(account.name)
+                                                
                                         }
                                     }
                                 } label: {
                                     HStack(spacing: 4) {
                                         Text(selectedAccountID == nil ? "Account" : accounts.first(where: { $0.id == selectedAccountID })?.name ?? "Unknown")
                                             .foregroundColor(selectedAccountID == nil ? labelColor : fieldColor)
-                                            .font(.subheadline)
-                                            .frame(width:60)
+                                            .font(.caption2)
+                                            .frame(width:90)
                                             .padding(.vertical, 4)
-                                            .padding(.horizontal, 1)
+                                            .padding(.horizontal, 3)
                                         Image(systemName: "chevron.down")
                                             .resizable()
                                             .scaledToFit()
@@ -228,7 +227,7 @@ struct AddExpenseTransactionView: View {
                                     .multilineTextAlignment(.center)
                                     .padding(.vertical, 7)
                                     .padding(.horizontal, 8)
-                                    .frame(width: 130)
+                                    .frame(width: 160)
                                     .background(Color.gray.opacity(0.1))
                                     .cornerRadius(5)
                         
@@ -256,8 +255,8 @@ struct AddExpenseTransactionView: View {
                                 Text(transactionLedgerGroup.isEmpty ? "Select Ledger Group" : transactionLedgerGroup)
                                     .foregroundColor(transactionLedgerGroup.isEmpty ? labelColor : fieldColor)
                                     .font(.subheadline)
-                                    .frame(width:120)
-                                    .padding(.vertical, 5)
+                                    .frame(width:160)
+                                    .padding(.vertical, 4)
                                     .padding(.horizontal, 3)
                                 Image(systemName: "chevron.down")
                                     .resizable()

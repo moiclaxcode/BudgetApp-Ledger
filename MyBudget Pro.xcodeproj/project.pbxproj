@@ -186,7 +186,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 9AD157192D764A11009E6A13 /* Build configuration list for PBXProject "BudgetApp-Ledger" */;
+			buildConfigurationList = 9AD157192D764A11009E6A13 /* Build configuration list for PBXProject "MyBudget Pro" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -517,7 +517,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9AD157192D764A11009E6A13 /* Build configuration list for PBXProject "BudgetApp-Ledger" */ = {
+		9AD157192D764A11009E6A13 /* Build configuration list for PBXProject "MyBudget Pro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9AD157422D764A13009E6A13 /* Debug */,

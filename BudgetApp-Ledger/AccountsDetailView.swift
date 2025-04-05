@@ -141,6 +141,7 @@ struct AccountsDetailView: View {
                     }
                     .padding(.horizontal)
                     .padding(.top, 10)
+                    .padding(.bottom, 5)
 
                     Divider()
                     Text(ledgerGroup)
@@ -266,8 +267,7 @@ struct AccountsDetailView: View {
                     Spacer()
                     Button(action: { showTransferFundsView = true }) {
                         Image(systemName: "arrow.left.arrow.right.circle")
-                            .resizable()
-                            .frame(width: 30, height: 30)
+                            .imageScale(.large)
                             .foregroundColor(Color(#colorLiteral(red: 0.0039, green: 0.1294, blue: 0.4117, alpha: 0.7995))) // #012169 80% Opacity
                     }
                     .padding(.bottom, 10)

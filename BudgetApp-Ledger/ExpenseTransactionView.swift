@@ -119,7 +119,7 @@ struct ExpenseTransactionView: View {
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 0) {
-                    // Header Section
+                    // MARK: - Header Section
                     VStack(spacing: 5) {
                         totalExpensesSection
                         
@@ -156,7 +156,7 @@ struct ExpenseTransactionView: View {
                         .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
                         .padding(.horizontal)
                     
-                    // Scrollable Transactions List
+                    // MARK: - Scrollable Transactions in Middle
                     ScrollView {
                         VStack(alignment: .leading) {
                             Text("Expenses")
@@ -164,51 +164,61 @@ struct ExpenseTransactionView: View {
                                 .padding(.horizontal, 40)
                                 .padding(.top, 5)
                                 .foregroundColor(Color(#colorLiteral(red: 0.8901960784, green: 0.09411764706, blue: 0.2156862745, alpha: 1))) // #E31837
-                            
-                            VStack(spacing: 10) {
+                        
+                            // MARK: - New Plain List Style Setup
+                            VStack(spacing: 0) {
                                 ForEach(groupedTransactions, id: \.group) { group in
-                                    DisclosureGroup(
-                                        isExpanded: Binding(
-                                            get: { disclosureExpandedStates[group.group] ?? true },
-                                            set: { disclosureExpandedStates[group.group] = $0 }
-                                        )
-                                    ) {
-                                        ForEach(group.transactions, id: \.id) { transaction in
-                                            VStack(spacing: 0) {
-                                                HStack {
-                                                    TransactionRow(
-                                                        transaction: transaction,
-                                                        runningBalance: nil,
-                                                        selectedGrouping: selectedGrouping,
-                                                        showPayFrom: true
-                                                    )
-                                                    Spacer()
+                                    VStack(spacing: 0) {
+                                        // Group label
+                                        HStack {
+                                            Text(group.group)
+                                                .font(.caption)
+                                                .foregroundColor(Color.gray)
+                                            Spacer()
+                                        }
+                                        .padding(.top, 4)
+                                        .padding(.horizontal, 20)
+
+                                        Divider()
+                                            .padding(.horizontal, 20)
+                                            .padding(.bottom, 5)
+
+                                        VStack(spacing: 0) {
+                                            ForEach(group.transactions, id: \.id) { transaction in
+                                                VStack(spacing: 0) {
+                                                    HStack {
+                                                        TransactionRow(
+                                                            transaction: transaction,
+                                                            runningBalance: nil,
+                                                            selectedGrouping: selectedGrouping,
+                                                            showPayFrom: true
+                                                        )
+                                                        Menu {
+                                                            Button("Edit") {
+                                                                selectedTransaction = transaction
+                                                                showEditExpenseView = true
+                                                            }
+                                                            Button("Delete", role: .destructive) {
+                                                                confirmDeleteTransaction(transaction)
+                                                            }
+                                                        } label: {
+                                                            Image(systemName: "ellipsis")
+                                                                .rotationEffect(.degrees(90))
+                                                                .foregroundColor(.gray)
+                                                        }
+                                                    }
+                                                    Divider()
+                                                        .padding(.horizontal, 20)
+                                                        .padding(.bottom, 10)
                                                 }
-                                                .contentShape(Rectangle())
-                                                .onTapGesture {
-                                                    selectedTransaction = transaction
-                                                    showEditExpenseView = true
-                                                }
-                                                Divider()
-                                                    .frame(height: 0.1)
                                             }
                                         }
-                                    } label: {
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(group.group)
-                                                .font(.caption2)
-                                                .foregroundColor(Color(#colorLiteral(red: 0.5490196078, green: 0.5960784314, blue: 0.6549019608, alpha: 1)))
-                                            Divider()
-                                                .frame(width: 70, height: 0.75)
-                                                .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
-                                                .padding(.bottom, 5)
-                                        }
+                                        .background(Color.white) //Rows Background
+                                        .cornerRadius(5)
+                                        .shadow(color: Color.gray.opacity(0.3), radius: 2, y: 1)
+                                        .padding(.horizontal, 10)
+                                        .padding(.bottom, 5)
                                     }
-                                    .padding(8)
-                                    .padding(.horizontal, 10)
-                                    .background(Color.white) //Background for row list
-                                    .cornerRadius(5)
-                                    .shadow(color: Color.gray.opacity(0.3), radius: 2, y: 1)
                                 }
                             }
                             .padding(.bottom, 10)
@@ -218,10 +228,12 @@ struct ExpenseTransactionView: View {
                         }
                     }
                     
+                    // MARK: - Footer
                     Divider()
                         .frame(height: 0.5)
                         .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
                         .padding(.horizontal)
+                   
                     
                     // Footer: Grouping Buttons (only "Day" and "Month")
                     groupingButtons
@@ -237,7 +249,7 @@ struct ExpenseTransactionView: View {
                                 .imageScale(.large)
                                 .foregroundColor(Color(#colorLiteral(red: 0.8901960784, green: 0.09411764706, blue: 0.2156862745, alpha: 1))) // #E31837
                         }
-                        .padding(.vertical, 60)
+                        .padding(.vertical, 15)
                         .padding(.horizontal, 20)
                     }
                 }
@@ -247,6 +259,8 @@ struct ExpenseTransactionView: View {
             .onReceive(NotificationCenter.default.publisher(for: .transactionUpdated)) { _ in
                 loadTransactions()
             }
+            // MARK: - .Sheets
+            
             .sheet(isPresented: $showAddExpenseTransactionView, onDismiss: { loadTransactions() }) {
                 AddExpenseTransactionView(ledgerGroup: ledgerGroup, onSave: { transaction in
                      // Persist to ledger transactions
@@ -291,6 +305,8 @@ struct ExpenseTransactionView: View {
                      )
                 }
             }
+            // MARK: - Delete
+            
             .alert(isPresented: $showDeleteConfirmation) {
                 Alert(
                     title: Text("Delete Expense?"),
@@ -343,7 +359,7 @@ struct ExpenseTransactionView: View {
                 }
             }
         }
-        .frame(width:90)
+        .frame(width:120)
         .padding(.vertical, 3)
         .padding(.horizontal, 3)
         .background(Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1))) // background behind day and month

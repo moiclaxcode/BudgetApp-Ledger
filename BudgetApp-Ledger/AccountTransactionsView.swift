@@ -151,7 +151,7 @@ struct AccountTransactionsView: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
+            Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)) // #FFFFFF
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
@@ -202,7 +202,7 @@ struct AccountTransactionsView: View {
                                     showAddIncomeView.toggle()
                                 }) {
                                     Image(systemName: "arrow.down.circle")
-                                        .font(.system(size: 30))
+                                        .imageScale(.large)
                                         .foregroundColor(
                                             Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1))
                                         )
@@ -213,7 +213,7 @@ struct AccountTransactionsView: View {
                                     showAddTransactionView.toggle()
                                 }) {
                                     Image(systemName: "arrow.up.circle")
-                                        .font(.system(size: 30))
+                                        .imageScale(.large)
                                         .foregroundColor(
                                             Color(#colorLiteral(red: 0.9490196078, green: 0.9725490196, blue: 0.9921568627, alpha: 1))
                                         )
@@ -222,10 +222,9 @@ struct AccountTransactionsView: View {
                         }
                         .padding()
                         .padding(.horizontal, 20)
-                        .background(
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.8025662252))) //#012169 80% opacity
-                                .stroke(Color.gray.opacity(0.3))
+                        .background(RoundedRectangle(cornerRadius: 5)
+                                .fill(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.8025662252))) //#012169 80% opacity header background
+                            .shadow(color: Color.gray.opacity(0.3), radius: 2, y: 1)
                         )
                         .padding(.horizontal, 20)
                         .padding(.top, 5)
@@ -234,7 +233,7 @@ struct AccountTransactionsView: View {
                         Divider().padding(.horizontal)
                     }
                 }
-                .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)))
+                .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) // #FFFFFF
                 
                 // MARK: - Scrollable Transactions in Middle
                 ScrollView {
@@ -247,74 +246,23 @@ struct AccountTransactionsView: View {
                             .foregroundColor(
                                 Color(#colorLiteral(red: 0.549, green: 0.596, blue: 0.655, alpha: 1))
                             )
-
-                        VStack(spacing: 10) {
-                            //                            ForEach(groupedTransactions, id: \.group) { group in
-                            //                                DisclosureGroup(
-                            //                                    isExpanded: Binding(
-                            //                                        get: { disclosureExpandedStates[group.group] ?? true },
-                            //                                        set: { disclosureExpandedStates[group.group] = $0 }
-                            //                                    )
-                            //                                ) {
-                            //                                    ForEach(group.transactions, id: \.id) { transaction in
-                            //                                        VStack(spacing: 0) {
-                            //                                            HStack {
-                            //                                                TransactionRow(
-                            //                                                    transaction: transaction,
-                            //                                                    runningBalance: calculateSubBalance(for: transaction),
-                            //                                                    selectedGrouping: selectedGrouping
-                            //                                                )
-                            //                                                Spacer()
-                            //                                            }
-                            //                                            //MARK: - onTapGesture
-                            //                                            .contentShape(Rectangle())
-                            //                                            .onTapGesture {
-                            //                                                DispatchQueue.main.async {
-                            //                                                selectedTransaction = transaction
-                            //                                                switch transaction.type {
-                            //                                                case .income:
-                            //                                                    showAddIncomeView = true
-                            //                                                case .expense:
-                            //                                                    showAddTransactionView = true
-                            //                                                case .transfer:
-                            //                                                        showTransferFundsView = true
-                            //                                                    }
-                            //                                                }
-                            //                                            }
-                            //                                            Divider()
-                            //                                                .frame(height: 0.1)
-                            //                                                
-                            //                                        }
-                            //                                    }
-                            //                                    // Group label header
-                            //                                } label: {
-                            //                                    VStack(alignment: .leading, spacing: 2) {
-                            //                                        Text(group.group)
-                            //                                            .font(.caption2)
-                            //                                            .foregroundColor(
-                            //                                                Color(#colorLiteral(red: 0.5490196078, green: 0.5960784314, blue: 0.6549019608, alpha: 1)))
-                            //                                        Divider()
-                            //                                    .frame(width: 70, height: 0.40)
-                            //                                    .background(Color(#colorLiteral(red: 0.003921568627, green: 0.1294117647, blue: 0.4117647059, alpha: 0.7995))) // #012169 80% Opacity
-                            //                                    .padding(.bottom, 5)
-                            //                                            
-                            //                                            
-                            //                                    }
-                            //                                }
-                            //                                // Row background, behind row background
-                            //                                .padding(8)
-                            //                                .padding(.horizontal, 10)
-                            //                                .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) //#FFF Row background
-                            //                                .cornerRadius(8)
-                            //                                .shadow(color: Color(#colorLiteral(red: 0.7803921569, green: 0.7803921569, blue: 0.7803921569, alpha: 0.800651904)), radius: 2, y: 1) //#C7C7C7 80% Opacity
-                           
+                        // MARK: - New Plain List Style Setup
+                        VStack(spacing: 0) {
                             ForEach(groupedTransactions, id: \.group) { group in
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(spacing: 0) {
                                     // Group label
-                                    Text(group.group)
-                                        .font(.caption2)
-                                        .foregroundColor(Color.gray)
-                                        .padding(.leading, 10)
+                                    HStack {
+                                        Text(group.group)
+                                            .font(.caption)
+                                            .foregroundColor(Color.gray)
+                                        Spacer()
+                                    }
+                                    .padding(.top, 4)
+                                    .padding(.horizontal, 20)
+
+                                    Divider()
+                                        .padding(.horizontal, 20)
+                                        .padding(.bottom, 5)
                                     
                                     VStack(spacing: 0) {
                                         ForEach(group.transactions, id: \.id) { transaction in
@@ -349,18 +297,17 @@ struct AccountTransactionsView: View {
                                             }
                                         }
                                     }
-                                    .background(Color.white)
+                                    .background(Color.white) //Rows Background
                                     .cornerRadius(5)
                                     .shadow(color: Color.gray.opacity(0.3), radius: 2, y: 1)
                                     .padding(.horizontal, 10)
                                     .padding(.bottom, 5)
                                 }
-                                    // Hasta aqui
-                                }
                             }
+                        }
                         
                         .padding(.bottom,10)
-                        .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) //#F7F7F7 Behind row background
+                        .background(Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))) //#FFFFFF Behind row background
                         .cornerRadius(8)
                         .padding(.horizontal, 20)
                     }
@@ -408,7 +355,7 @@ struct AccountTransactionsView: View {
                             }
                         }
                     }
-                    .frame(width: 90)
+                    .frame(width: 120)
                     .padding(.vertical, 3)
                     .padding(.horizontal, 3)
                     .background(Color.white)
